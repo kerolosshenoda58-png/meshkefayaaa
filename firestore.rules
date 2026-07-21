@@ -1,0 +1,115 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+    
+    function existing() {
+      return resource.data;
+    }
+    
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() > 0 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function isOwner(userId) {
+      return request.auth.uid == userId;
+    }
+
+    function isValidUser(data) {
+      return data.keys().hasAll(['email', 'name', 'role', 'createdAt']) &&
+        data.email is string && data.email.size() <= 200 &&
+        data.name is string && data.name.size() <= 100 &&
+        data.role is string && (data.role == 'creator' || data.role == 'brand') &&
+        data.createdAt is number &&
+        (data.get('avatar', '') is string) && (data.get('lastLogin', 0) is number);
+    }
+
+    match /users/{userId} {
+      allow get: if isSignedIn();
+      allow list: if isSignedIn();
+      allow create: if isSignedIn() && isOwner(userId) && isValidId(userId) && isValidUser(incoming()) && incoming().createdAt == request.time.toMillis();
+      allow update: if isSignedIn() && isOwner(userId) && isValidUser(incoming()) && incoming().createdAt == existing().createdAt;
+    }
+
+    function isValidCreatorProfile(data) {
+       return data.keys().hasAll(['userId', 'username']) &&
+         data.userId is string && data.userId.size() <= 128 &&
+         data.username is string && data.username.size() <= 100;
+    }
+
+    match /creator_profiles/{userId} {
+      allow get: if isSignedIn();
+      allow list: if isSignedIn();
+      allow create: if isSignedIn() && isOwner(userId) && isValidId(userId) && isValidCreatorProfile(incoming()) && incoming().userId == request.auth.uid;
+      allow update: if isSignedIn() && isOwner(userId) && isValidCreatorProfile(incoming()) && incoming().userId == existing().userId;
+    }
+
+    function isValidBrandProfile(data) {
+       return data.keys().hasAll(['userId', 'companyName']) &&
+         data.userId is string && data.userId.size() <= 128 &&
+         data.companyName is string && data.companyName.size() <= 100;
+    }
+
+    match /brand_profiles/{userId} {
+      allow get: if isSignedIn();
+      allow list: if isSignedIn();
+      allow create: if isSignedIn() && isOwner(userId) && isValidId(userId) && isValidBrandProfile(incoming()) && incoming().userId == request.auth.uid;
+      allow update: if isSignedIn() && isOwner(userId) && isValidBrandProfile(incoming()) && incoming().userId == existing().userId;
+    }
+
+    function isValidPost(data) {
+      return data.keys().hasAll(['userId', 'createdAt']) &&
+        data.userId is string && data.userId.size() <= 128 &&
+        data.createdAt is number;
+    }
+
+    match /posts/{postId} {
+      allow get: if isSignedIn();
+      allow list: if isSignedIn();
+      allow create: if isSignedIn() && isValidId(postId) && isValidPost(incoming()) && incoming().userId == request.auth.uid && incoming().createdAt == request.time.toMillis();
+      allow update: if isSignedIn() && existing().userId == request.auth.uid && isValidPost(incoming()) && incoming().userId == existing().userId && incoming().createdAt == existing().createdAt;
+      allow delete: if isSignedIn() && existing().userId == request.auth.uid;
+    }
+
+    function isValidCampaign(data) {
+      return data.keys().hasAll(['brandId', 'title', 'createdAt']) &&
+        data.brandId is string && data.brandId.size() <= 128 &&
+        data.title is string && data.title.size() <= 200 &&
+        data.createdAt is number;
+    }
+
+    match /campaigns/{campaignId} {
+      allow get: if isSignedIn();
+      allow list: if isSignedIn();
+      allow create: if isSignedIn() && isValidId(campaignId) && isValidCampaign(incoming()) && incoming().brandId == request.auth.uid && incoming().createdAt == request.time.toMillis();
+      allow update: if isSignedIn() && existing().brandId == request.auth.uid && isValidCampaign(incoming()) && incoming().brandId == existing().brandId && incoming().createdAt == existing().createdAt;
+      allow delete: if isSignedIn() && existing().brandId == request.auth.uid;
+    }
+
+    function isValidMessage(data) {
+      return data.keys().hasAll(['senderId', 'receiverId', 'message', 'timestamp']) &&
+        data.senderId is string && data.senderId.size() <= 128 &&
+        data.receiverId is string && data.receiverId.size() <= 128 &&
+        data.message is string && data.message.size() <= 2000 &&
+        data.timestamp is number;
+    }
+
+    match /messages/{messageId} {
+      allow get: if isSignedIn() && (existing().senderId == request.auth.uid || existing().receiverId == request.auth.uid);
+      allow list: if isSignedIn() && (resource.data.senderId == request.auth.uid || resource.data.receiverId == request.auth.uid);
+      allow create: if isSignedIn() && isValidId(messageId) && isValidMessage(incoming()) && incoming().senderId == request.auth.uid && incoming().timestamp == request.time.toMillis();
+      allow update: if false; // Messages shouldn't be edited
+    }
+  }
+}

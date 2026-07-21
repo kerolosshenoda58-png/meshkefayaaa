@@ -1,0 +1,113 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "Base user account",
+      "type": "object",
+      "properties": {
+        "email": { "type": "string" },
+        "name": { "type": "string" },
+        "avatar": { "type": "string" },
+        "role": { "type": "string" },
+        "createdAt": { "type": "number" },
+        "lastLogin": { "type": "number" }
+      },
+      "required": ["email", "name", "role", "createdAt"]
+    },
+    "CreatorProfile": {
+      "title": "CreatorProfile",
+      "description": "Creator details",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "username": { "type": "string" },
+        "bio": { "type": "string" },
+        "category": { "type": "string" },
+        "skills": { "type": "array", "items": { "type": "string" } },
+        "location": { "type": "string" },
+        "portfolio": { "type": "array", "items": { "type": "string" } },
+        "socialLinks": { "type": "object" },
+        "cryovaScore": { "type": "number" }
+      },
+      "required": ["userId", "username"]
+    },
+    "BrandProfile": {
+      "title": "BrandProfile",
+      "description": "Brand details",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "companyName": { "type": "string" },
+        "logo": { "type": "string" },
+        "industry": { "type": "string" },
+        "description": { "type": "string" },
+        "website": { "type": "string" }
+      },
+      "required": ["userId", "companyName"]
+    },
+    "Post": {
+      "title": "Post",
+      "description": "Creator post",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "content": { "type": "string" },
+        "media": { "type": "array", "items": { "type": "string" } },
+        "createdAt": { "type": "number" }
+      },
+      "required": ["userId", "createdAt"]
+    },
+    "Campaign": {
+      "title": "Campaign",
+      "description": "Brand campaign",
+      "type": "object",
+      "properties": {
+        "brandId": { "type": "string" },
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "budget": { "type": "string" },
+        "requirements": { "type": "string" },
+        "createdAt": { "type": "number" }
+      },
+      "required": ["brandId", "title", "createdAt"]
+    },
+    "Message": {
+      "title": "Message",
+      "description": "Direct message",
+      "type": "object",
+      "properties": {
+        "senderId": { "type": "string" },
+        "receiverId": { "type": "string" },
+        "message": { "type": "string" },
+        "timestamp": { "type": "number" }
+      },
+      "required": ["senderId", "receiverId", "message", "timestamp"]
+    }
+  },
+  "firestore": {
+    "users/{userId}": {
+      "schema": { "$ref": "#/entities/User" },
+      "description": "User accounts"
+    },
+    "creator_profiles/{userId}": {
+      "schema": { "$ref": "#/entities/CreatorProfile" },
+      "description": "Creator details linked to user"
+    },
+    "brand_profiles/{userId}": {
+      "schema": { "$ref": "#/entities/BrandProfile" },
+      "description": "Brand details linked to user"
+    },
+    "posts/{postId}": {
+      "schema": { "$ref": "#/entities/Post" },
+      "description": "Feed posts"
+    },
+    "campaigns/{campaignId}": {
+      "schema": { "$ref": "#/entities/Campaign" },
+      "description": "Brand campaigns"
+    },
+    "messages/{messageId}": {
+      "schema": { "$ref": "#/entities/Message" },
+      "description": "Direct messages"
+    }
+  }
+}

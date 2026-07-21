@@ -1,0 +1,8 @@
+{
+  "name": "UGC Creators Hub",
+  "description": "A professional hybrid platform combining the capabilities of Contra, Upwork, and LinkedIn tailored for UGC content creators in UAE, Saudi Arabia, and Egypt.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
